@@ -1,4 +1,5 @@
-= ThermoSmart JeeNode = 
+ThermoSmart JeeNode
+===================
 
 Load this program into the JeeNode to start an i2c device.
 The program reads temperature from TX29 temperature emitter.
