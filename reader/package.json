@@ -1,0 +1,15 @@
+{
+  "name": "thermosmart-jeenode-reader",
+  "version": "1.0.0",
+  "description": "Reads temperature from JeeNode with i2c",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Alexandre Thomazo <alex@thomazo.info>",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "i2c": "^0.2.1",
+    "mqtt": "^1.1.5"
+  }
+}
