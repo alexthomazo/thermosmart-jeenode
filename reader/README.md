@@ -20,3 +20,14 @@ For testing, you can use
     sudo aptitude install i2c-tools
     sudo i2cdetect -y 1
 
+
+MQTT messages
+-------------
+
+Each time the reader detect a change in temperature, it post the following message to topic `thermosmart/temperature/<id>`
+where `<id>` is the id of the thermometer :
+
+    {
+        "t":21.5
+        "d":"2015-05-24T16:48:03.240Z"
+    }

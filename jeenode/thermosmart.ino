@@ -2,11 +2,14 @@
 #include <RF12.h>
 #include <Wire.h>
 
-#define CRC_POLY 0x31
+#define I2C_ADDRESS 0x7
 #define MAX_SENSORS 8
+
 #define DEBUG_OFF
 #define SERIAL_OFF
 #define I2C
+
+#define CRC_POLY 0x31
 
 struct Sensor {
   byte sensorId;
@@ -30,7 +33,7 @@ void setup() {
 #endif
 
 #ifdef I2C
-  Wire.begin(7);
+  Wire.begin(I2C_ADDRESS);
   Wire.onRequest(wireReq);
 #endif
 
