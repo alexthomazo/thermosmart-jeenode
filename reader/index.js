@@ -10,6 +10,7 @@ var jeenode_address = 0x7;
 
 //prefix topic for publishing temperatures
 var mqtt_base_topic = 'thermosmart/temperature/';
+var mqtt_monitor_topic = 'thermosmart/monitor/temperature';
 
 //setup i2c communication
 var wire = new i2c(own_address, {device: '/dev/i2c-1'});
@@ -48,6 +49,10 @@ function readJeeNode() {
 					//only publish if temperature change
 					client.publish(mqtt_base_topic + hexId, JSON.stringify(msg), { retain: true });
 				}
+
+				//always publish into monitoring to get the last received event to detect lost of a sensor
+				client.publish(mqtt_monitor_topic + '/' + hexId, JSON.stringify(new Date().toISOString()), { retain: true });
+
 			}
 		}
 	});
@@ -55,7 +60,8 @@ function readJeeNode() {
 }
 
 function monitor() {
-	client.publish('thermosmart/monitor/temperature', JSON.stringify(new Date().toISOString()), { retain: true });
+	//publish each 30s that the server is still alive
+	client.publish(mqtt_monitor_topic, JSON.stringify(new Date().toISOString()), { retain: true });
 	setTimeout(monitor, 30000);
 }
 
