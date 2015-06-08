@@ -19,8 +19,9 @@ wire.setAddress(jeenode_address);
 //setup mqtt communication
 var client  = mqtt.connect('mqtt://localhost');
 
-//current temperature state
+//current temperature state and number of times the sensors has been seen during the last 10 read from jeenode
 var state = {};
+var loopNum = 0;
 
 /**
  * Read temperatures through JeeNode over I2C then send it to MQTT if temperature changed from last reading
@@ -45,7 +46,9 @@ function readJeeNode() {
 					d: new Date().toISOString()
 				};
 
-				if (!state[hexId] || state[hexId] != msg.t) {
+				if (!state[hexId]) state[hexId] = { nbSeen: 0 };
+
+				if (state[hexId].temp != msg.t) {
 					//only publish if temperature change
 					client.publish(mqtt_base_topic + hexId, JSON.stringify(msg), { retain: true });
 				}
@@ -53,10 +56,33 @@ function readJeeNode() {
 				//always publish into monitoring to get the last received event to detect lost of a sensor
 				client.publish(mqtt_monitor_topic + '/' + hexId, JSON.stringify(new Date().toISOString()), { retain: true });
 
+				state[hexId].nbSeen++;
 			}
 		}
 	});
+	removeOldSensors();
 	setTimeout(readJeeNode, 5000);
+}
+
+/** Remove all sensors that have not been seen during reading */
+function removeOldSensors() {
+	loopNum++;
+	if (loopNum < 2) return;
+	loopNum = 0;
+
+	var toRemove = [];
+	Object.keys(state).forEach(function(key) {
+		if (state[key].nbSeen == 0) toRemove.push(key);
+		state[key].nbSeen = 0;
+	});
+
+	for (var i = 0; i < toRemove.length; i++) {
+		var hexId = toRemove[i];
+		//remove temperature
+		client.publish(mqtt_base_topic + hexId, null, { retain: true });
+		//remove monitoring
+		client.publish(mqtt_monitor_topic + '/' + hexId, null, { retain: true });
+	}
 }
 
 function monitor() {
@@ -67,8 +93,15 @@ function monitor() {
 
 client.on('message', function(topic, message) {
 	var id = topic.substr(topic.lastIndexOf('/') + 1);
+	if (message.length == 0) {
+		//we lost track of this sensors, remove from state
+		if (state[id]) delete state[id];
+		return;
+	}
+
 	var msg = JSON.parse(message);
-	state[id] = msg.t;
+	if (!state[id]) state[id] = { nbSeen: 0 };
+	state[id].temp = msg.t;
 });
 
 client.on('connect', function () {
